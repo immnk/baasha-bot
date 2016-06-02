@@ -1,5 +1,6 @@
-/*global jQuery, Handlebars, Router, alert, window, localStorage */
+/*global jQuery, Handlebars, Router, alert, window */
 window.baseUrl = 'http://auth.bompod.hasura-app.io';
+window.dataUrl = 'http://data.bompod.hasura-app.io';
 
 jQuery(function ($) {
   'use strict';
@@ -35,32 +36,36 @@ jQuery(function ($) {
     pluralize: function (count, word) {
       return count === 1 ? word : word + 's';
     },
-    store: function (namespace, data) {
-      if (arguments.length > 1) {
-        /* Save all the todos on the backend */
-        return localStorage.setItem(namespace, JSON.stringify(data));
-      } else {
-        var store = localStorage.getItem(namespace);
-        return (store && JSON.parse(store)) || [];
-        /* Fetch all the todos from the database */
-      }
+    store: function (app) {
+      $.ajax({
+        url: window.dataUrl + '/api/1/table/todo/select',
+        data: JSON.stringify({columns: ["*"]}),
+        headers: {'Content-Type': 'application/json'},
+        method: 'POST'
+      }).done(function(data) {
+        app.todos = data;
+        app.render();
+      });
     }
   };
 
   var App = {
+    todos: [],
     init: function () {
-      this.todos = util.store('todos-jquery');
+      util.store(this);
       this.todoTemplate = Handlebars.compile($('#todo-template').html());
       this.footerTemplate = Handlebars.compile($('#footer-template').html());
       this.bindEvents();
-
+      var _this = this;
       new Router({
         '/login': function () {
           $.ajax({
             url: window.baseUrl + '/user/account/info',
+            headers: {'Content-Type': 'application/json' },
             method: 'GET'
-          }).done(function() {
+          }).done(function(data) {
             window.location = '/#/all';
+            _this.userId = data.hasura_id;
           }).fail(function() {
             $('#login_submit').val('Login');
             $('section.route-section').addClass('hidden');
@@ -105,13 +110,16 @@ jQuery(function ($) {
       $('#register_submit').on('click', this.register.bind(this));
       $('#logout').on('click', this.logout.bind(this));
     },
+    userId: 0,
     logout: function(e) {
       e.preventDefault();
+      var _this = this;
       $.ajax({
         url: window.baseUrl + '/user/logout',
         method: 'GET'
       }).done(function() {
         window.location = '/#/login';
+        _this.userId = 0;
       }).fail(function(j) {
         console.error(j);
         alert('Logout failed! Try refreshing?');
@@ -123,12 +131,14 @@ jQuery(function ($) {
       $('#login_submit').val('Logging in...');
       var loginUrl = window.baseUrl + '/login';
       var data = { username: $('#username').val(), password: $('#password').val() };
+      var _this = this;
       $.ajax({
         url: loginUrl,
         method: 'POST',
         headers: { 'Content-Type' : 'application/json' },
         data: JSON.stringify(data)
-      }).done(function() {
+      }).done(function(data) {
+        _this.userId = data.hasura_id;
         window.location = '/#/all';
         $('#login_submit').val('Login');
       }).fail(function() {
@@ -178,7 +188,6 @@ jQuery(function ($) {
       $('#toggle-all').prop('checked', this.getActiveTodos().length === 0);
       this.renderFooter();
       $('#new-todo').focus();
-      util.store('todos-jquery', this.todos);
     },
     renderFooter: function () {
       var todoCount = this.todos.length;
@@ -195,11 +204,24 @@ jQuery(function ($) {
     toggleAll: function (e) {
       var isChecked = $(e.target).prop('checked');
 
-      this.todos.forEach(function (todo) {
-        todo.completed = isChecked;
-      });
-
-      this.render();
+      var updateQuery = {
+        $set: { completed: isChecked},
+        where: { user_id: this.userId}
+      };
+      var _this = this;
+      $.ajax({
+          url: window.dataUrl + '/api/1/table/todo/update',
+          method: 'POST',
+          data: JSON.stringify(updateQuery),
+          headers: {'Content-Type': 'application/json'}
+        }).done(function() {
+          _this.todos.forEach(function (todo) {
+            todo.completed = isChecked;
+          });
+          _this.render();
+        }).fail(function() {
+          alert('Try again? Failed to update.');
+        });
     },
     getActiveTodos: function () {
       return this.todos.filter(function (todo) {
@@ -223,9 +245,20 @@ jQuery(function ($) {
       return this.todos;
     },
     destroyCompleted: function () {
-      this.todos = this.getActiveTodos();
-      this.filter = 'all';
-      this.render();
+      var deleteQuery = { where: {completed: true }};
+      var _this = this;
+      $.ajax({
+          url: window.dataUrl + '/api/1/table/todo/delete',
+          method: 'POST',
+          data: JSON.stringify(deleteQuery),
+          headers: {'Content-Type': 'application/json'}
+        }).done(function() {
+          _this.todos = _this.getActiveTodos();
+          _this.filter = 'all';
+          _this.render();
+        }).fail(function() {
+          alert('Try again? Failed to delete.');
+        });
     },
     // accepts an element from inside the `.item` div and
     // returns the corresponding index in the `todos` array
@@ -248,20 +281,54 @@ jQuery(function ($) {
         return;
       }
 
-      this.todos.push({
-        id: util.uuid(),
-        title: val,
-        completed: false
-      });
-
-      $input.val('');
-
-      this.render();
+      var uid = util.uuid();
+      var insertQuery = {
+        objects:[{
+          id: uid,
+          title: val,
+          completed: false,
+          user_id: this.userId
+        }]
+      };
+      var _this = this;
+      $.ajax({
+          url: window.dataUrl + '/api/1/table/todo/insert',
+          method: 'POST',
+          data: JSON.stringify(insertQuery),
+          headers: {'Content-Type': 'application/json'}
+        }).done(function() {
+          _this.todos.push({
+            id: uid,
+            title: val,
+            completed: false
+          });
+          $input.val('');
+          _this.render();
+        }).fail(function() {
+          alert('Try again? Failed to update.');
+        });
     },
     toggle: function (e) {
       var i = this.indexFromEl(e.target);
-      this.todos[i].completed = !this.todos[i].completed;
-      this.render();
+      var uid = this.todos[i].id;
+      var oldCompleted = this.todos[i].completed;
+
+      var updateQuery = {
+        $set: { completed: !oldCompleted},
+        where: { id: uid}
+      };
+      var _this = this;
+      $.ajax({
+          url: window.dataUrl + '/api/1/table/todo/update',
+          method: 'POST',
+          data: JSON.stringify(updateQuery),
+          headers: {'Content-Type': 'application/json'}
+        }).done(function() {
+          _this.todos[i].completed = !_this.todos[i].completed;
+          _this.render();
+        }).fail(function() {
+          alert('Try again? Failed to update.');
+        });
     },
     edit: function (e) {
       var $input = $(e.target).closest('li').addClass('editing').find('.edit');
@@ -286,17 +353,44 @@ jQuery(function ($) {
         return;
       }
 
+      var _this = this;
+
       if ($el.data('abort')) {
         $el.data('abort', false);
       } else {
-        this.todos[this.indexFromEl(el)].title = val;
+        var uid = this.todos[this.indexFromEl(el)].id;
+        var updateQuery = {
+          $set: { title: val},
+          where: { id: uid}
+        };
+        $.ajax({
+          url: window.dataUrl + '/api/1/table/todo/update',
+          method: 'POST',
+          data: JSON.stringify(updateQuery),
+          headers: {'Content-Type': 'application/json'}
+        }).done(function() {
+          _this.todos[_this.indexFromEl(el)].title = val;
+          _this.render();
+        }).fail(function() {
+          alert('Try again? Failed to update.');
+        });
       }
-
-      this.render();
     },
     destroy: function (e) {
-      this.todos.splice(this.indexFromEl(e.target), 1);
-      this.render();
+      var uid = this.todos[this.indexFromEl(e.target)].id;
+      var deleteQuery = {where: { id: uid}};
+      var _this = this;
+      $.ajax({
+        url: window.dataUrl + '/api/1/table/todo/delete',
+        method: 'POST',
+        data: JSON.stringify(deleteQuery),
+        headers: { 'Content-Type': 'application/json' }
+      }).done(function() {
+        _this.todos.splice(_this.indexFromEl(e.target), 1);
+        _this.render();
+      }).fail(function() {
+        alert('Try again? Failed to delete.');
+      });
     }
   };
 
