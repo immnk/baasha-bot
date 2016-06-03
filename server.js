@@ -2,6 +2,7 @@ var fs = require('fs');
 
 var express = require('express');
 var app = express();
+
 app.get('/', (req, res) => {
   fs.readFile('templates/index.html', function (err, data) {
     if (err) {
@@ -9,9 +10,10 @@ app.get('/', (req, res) => {
       return;
     }
 
+    var baseDomain = process.env.PROJECTNAME;
     var compiledHtml = data.toString()
-                           .replace('{{{authUrl}}}','http://auth.bompod.hasura-app.io')
-                           .replace('{{{dataUrl}}}','http://data.bompod.hasura-app.io');
+                           .replace('{{{authUrl}}}',`http://auth.${baseDomain}.hasura-app.io`)
+                           .replace('{{{dataUrl}}}',`http://data.${baseDomain}.hasura-app.io`);
     res.send(compiledHtml);
   });
 });

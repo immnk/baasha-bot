@@ -75,8 +75,9 @@ jQuery(function ($) {
           $.ajax({
             url: window.authUrl + '/user/account/info',
             method: 'GET'
-          }).done(function() {
+          }).done(function(data) {
             window.location = '/#/all';
+            _this.userId = data.hasura_id;
           }).fail(function() {
             $('#register_submit').val('Register');
             $('section.route-section').addClass('hidden');
@@ -90,7 +91,7 @@ jQuery(function ($) {
             method: 'GET'
           }).done(function() {
             _this.filter = filter;
-            _this.render();
+            util.store(_this);
             $('section.route-section').addClass('hidden');
             $('#logout').removeClass('hidden');
             $('#todoapp').removeClass('hidden');
