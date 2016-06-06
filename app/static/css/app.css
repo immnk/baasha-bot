@@ -33,3 +33,8 @@
 .button:hover {
     background: #eee;
 }
+
+#logout {
+    background: #fff;
+    padding: 5px;
+}

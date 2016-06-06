@@ -1,12 +1,21 @@
 /*global jQuery, Handlebars, Router, alert, window */
 
+var username = null;
+
 jQuery(function ($) {
   'use strict';
 
   $.ajaxSetup({
     xhrFields: { withCredentials: true },
-    crossDomain: true
+    crossDomain: true,
+    headers: {'X-Hasura-Role' : 'user'}
   });
+
+  var setUsername = function (u) {
+    username = u;
+    $('#userinfo').text(username);
+  };
+
 
   Handlebars.registerHelper('eq', function (a, b, options) {
     return a === b ? options.fn(this) : options.inverse(this);
@@ -64,6 +73,7 @@ jQuery(function ($) {
           }).done(function(data) {
             window.location = '/#/all';
             _this.userId = data.hasura_id;
+            setUsername(data.username);
           }).fail(function() {
             $('#login_submit').val('Login');
             $('section.route-section').addClass('hidden');
@@ -78,6 +88,7 @@ jQuery(function ($) {
           }).done(function(data) {
             window.location = '/#/all';
             _this.userId = data.hasura_id;
+            setUsername(data.username);
           }).fail(function() {
             $('#register_submit').val('Register');
             $('section.route-section').addClass('hidden');
@@ -89,9 +100,11 @@ jQuery(function ($) {
           $.ajax({
             url: window.authUrl + '/user/account/info',
             method: 'GET'
-          }).done(function() {
+          }).done(function(data) {
             _this.filter = filter;
             util.store(_this);
+            _this.userId = data.hasura_id;
+            setUsername(data.username);
             $('section.route-section').addClass('hidden');
             $('#logout').removeClass('hidden');
             $('#todoapp').removeClass('hidden');
@@ -144,6 +157,7 @@ jQuery(function ($) {
         data: JSON.stringify(data)
       }).done(function(data) {
         _this.userId = data.hasura_id;
+        setUsername($('#username').val());
         window.location = '/#/all';
         $('#login_submit').val('Login');
       }).fail(function() {
