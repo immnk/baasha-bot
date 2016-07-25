@@ -1,7 +1,3 @@
-if (!(process.env.PROJECTNAME)) {
-  throw "Environment variable PROJECTNAME necessary, but not found.";
-}
-
 var fs = require('fs');
 
 var express = require('express');
@@ -15,10 +11,17 @@ app.get('/', (req, res) => {
       return;
     }
 
-    var baseDomain = process.env.PROJECTNAME;
+    console.log('bullshit');
+    if (req.hostname.split('.')[2] !== 'hasura-app') {
+      console.log('INVALID: Not running on a hasura-app.io domain!');
+      res.status(400).send('Not running on a hasura-app.io domain.');
+      return;
+    }
+
+    var baseDomain = req.hostname.split('.')[1];
     var compiledHtml = data.toString()
-                           .replace('{{{authUrl}}}',`http://auth.${baseDomain}.hasura-app.io`)
-                           .replace('{{{dataUrl}}}',`http://data.${baseDomain}.hasura-app.io`);
+                           .replace('{{{authUrl}}}',`//auth.${baseDomain}.hasura-app.io`)
+                           .replace('{{{dataUrl}}}',`//data.${baseDomain}.hasura-app.io`);
     res.send(compiledHtml);
   });
 });
