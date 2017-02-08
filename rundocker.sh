@@ -1,2 +1,2 @@
 #!/bin/bash
-docker run -ti --rm -e PROJECTNAME=bompod -p 7000:80 hasura/todomvc:1.0e
+docker run -ti --rm -e PROJECT_NAME=eyeful53 -v $(pwd)/app:/app -p 8080:8080 mhart/alpine-node:4.4 /bin/sh

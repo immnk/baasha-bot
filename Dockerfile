@@ -1,3 +1,5 @@
-FROM node:4.4.4
+FROM mhart/alpine-node:4.4
+
 COPY app /app
-CMD node /app/server.js
+WORKDIR /app
+CMD node server.js

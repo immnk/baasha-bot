@@ -1,14 +1,17 @@
 /*global jQuery, Handlebars, Router, alert, window */
 
 var username = null;
+var token = null;
 
 jQuery(function ($) {
   'use strict';
 
   $.ajaxSetup({
-    xhrFields: { withCredentials: true },
+    // xhrFields: { withCredentials: true },
     crossDomain: true,
-    headers: {'X-Hasura-Role' : 'user'}
+    headers: {
+      'X-Hasura-Role' : 'user'
+    }
   });
 
   var setUsername = function (u) {
@@ -16,6 +19,12 @@ jQuery(function ($) {
     $('#userinfo').text(username);
   };
 
+  function tokenHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    };
+  }
 
   Handlebars.registerHelper('eq', function (a, b, options) {
     return a === b ? options.fn(this) : options.inverse(this);
@@ -47,7 +56,7 @@ jQuery(function ($) {
       $.ajax({
         url: window.dataUrl + '/api/1/table/todo/select',
         data: JSON.stringify({columns: ["*"]}),
-        headers: {'Content-Type': 'application/json'},
+        headers: tokenHeaders(),
         method: 'POST'
       }).done(function(data) {
         app.todos = data;
@@ -68,11 +77,12 @@ jQuery(function ($) {
         '/login': function () {
           $.ajax({
             url: window.authUrl + '/user/account/info',
-            headers: {'Content-Type': 'application/json' },
+            headers: token ? tokenHeaders() : {'Content-Type': 'application/json'},
             method: 'GET'
           }).done(function(data) {
             window.location = '/#/all';
             _this.userId = data.hasura_id;
+            token = data.auth_token;
             setUsername(data.username);
           }).fail(function() {
             $('#login_submit').val('Login');
@@ -84,10 +94,12 @@ jQuery(function ($) {
         '/register': function () {
           $.ajax({
             url: window.authUrl + '/user/account/info',
+            headers: token ? tokenHeaders() : {'Content-Type': 'application/json'},
             method: 'GET'
           }).done(function(data) {
             window.location = '/#/all';
             _this.userId = data.hasura_id;
+            token = data.auth_token;
             setUsername(data.username);
           }).fail(function() {
             $('#register_submit').val('Register');
@@ -99,11 +111,13 @@ jQuery(function ($) {
         '/:filter': function (filter) {
           $.ajax({
             url: window.authUrl + '/user/account/info',
+            headers: token ? tokenHeaders() : {'Content-Type': 'application/json'},
             method: 'GET'
           }).done(function(data) {
             _this.filter = filter;
             util.store(_this);
             _this.userId = data.hasura_id;
+            token = data.auth_token;
             setUsername(data.username);
             $('section.route-section').addClass('hidden');
             $('#logout').removeClass('hidden');
@@ -134,6 +148,7 @@ jQuery(function ($) {
       var _this = this;
       $.ajax({
         url: window.authUrl + '/user/logout',
+        headers: tokenHeaders(),
         method: 'GET'
       }).done(function() {
         window.location = '/#/login';
@@ -157,6 +172,7 @@ jQuery(function ($) {
         data: JSON.stringify(data)
       }).done(function(data) {
         _this.userId = data.hasura_id;
+        token = data.auth_token;
         setUsername($('#username').val());
         window.location = '/#/all';
         $('#login_submit').val('Login');
@@ -190,7 +206,8 @@ jQuery(function ($) {
         method: 'POST',
         headers: { 'Content-Type' : 'application/json' },
         data: JSON.stringify({username: username, password: pwd, email: email, mobile: mobile})
-      }).done(function() {
+      }).done(function(data) {
+        token = data.auth_token;
         window.location = '/#/all';
         $('#register_submit').val('Redirecting...');
       }).fail(function(j) {
@@ -232,7 +249,7 @@ jQuery(function ($) {
           url: window.dataUrl + '/api/1/table/todo/update',
           method: 'POST',
           data: JSON.stringify(updateQuery),
-          headers: {'Content-Type': 'application/json'}
+          headers: tokenHeaders()
         }).done(function() {
           _this.todos.forEach(function (todo) {
             todo.completed = isChecked;
@@ -270,7 +287,7 @@ jQuery(function ($) {
           url: window.dataUrl + '/api/1/table/todo/delete',
           method: 'POST',
           data: JSON.stringify(deleteQuery),
-          headers: {'Content-Type': 'application/json'}
+          headers: tokenHeaders()
         }).done(function() {
           _this.todos = _this.getActiveTodos();
           _this.filter = 'all';
@@ -314,7 +331,7 @@ jQuery(function ($) {
           url: window.dataUrl + '/api/1/table/todo/insert',
           method: 'POST',
           data: JSON.stringify(insertQuery),
-          headers: {'Content-Type': 'application/json'}
+          headers: tokenHeaders()
         }).done(function() {
           _this.todos.push({
             id: uid,
@@ -341,7 +358,7 @@ jQuery(function ($) {
           url: window.dataUrl + '/api/1/table/todo/update',
           method: 'POST',
           data: JSON.stringify(updateQuery),
-          headers: {'Content-Type': 'application/json'}
+          headers: tokenHeaders()
         }).done(function() {
           _this.todos[i].completed = !_this.todos[i].completed;
           _this.render();
@@ -386,7 +403,7 @@ jQuery(function ($) {
           url: window.dataUrl + '/api/1/table/todo/update',
           method: 'POST',
           data: JSON.stringify(updateQuery),
-          headers: {'Content-Type': 'application/json'}
+          headers: tokenHeaders()
         }).done(function() {
           _this.todos[_this.indexFromEl(el)].title = val;
           _this.render();
@@ -403,7 +420,7 @@ jQuery(function ($) {
         url: window.dataUrl + '/api/1/table/todo/delete',
         method: 'POST',
         data: JSON.stringify(deleteQuery),
-        headers: { 'Content-Type': 'application/json' }
+        headers: tokenHeaders()
       }).done(function() {
         _this.todos.splice(_this.indexFromEl(e.target), 1);
         _this.render();
