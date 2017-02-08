@@ -1,0 +1,12 @@
+3.0-rc1
+--
+* Works without cookies
+* If env var PROJECT_NAME, uses that has prject-name, else picks it up from URL it is served on.
+
+2.0
+--
+* Doesn't need env var PROJECTNAME, picks it up from URL it is served on.
+
+1.0
+--
+* Needs env var PROJECTNAME
