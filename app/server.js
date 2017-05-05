@@ -14,18 +14,20 @@ app.use(express.static('WebContent'));
 
 // Index route
 app.get('/', function(req, res) {
-    res.send('Hello world, I am a chat bot')
+    res.sendFile(constants.HTML_DIR + 'index.html', { root: __dirname });
 });
 
-app.get('/login', function(req, res) {
-    res.sendFile(constants.HTML_DIR + 'login.html', { root: __dirname });
+app.get('/privacy', function(req, res) {
+    res.sendFile(constants.HTML_DIR + 'privacy-policy.html', { root: __dirname });
 });
+
 
 app.get('/webhook/', function(req, res) {
     if (req.query['hub.verify_token'] === 'my_voice_is_my_password_verify_me') {
-        res.send(req.query['hub.challenge'])
+        res.send(req.query['hub.challenge']);
+        return;
     }
-    res.send('Error, wrong token')
+    res.send('Error, wrong token');
 });
 
 app.post('/webhook/', function(req, res) {
