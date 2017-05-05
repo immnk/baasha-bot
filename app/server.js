@@ -3,6 +3,10 @@ var bodyParser = require('body-parser');
 var request = require('request');
 var constants = require('./modules/constants');
 var fbMessenger = require('./modules/fbMessenger');
+var mongoose = require('mongoose');
+var config = require('./config');
+global.__base = __dirname + '/';
+
 var app = express();
 
 app.set('port', (process.env.PORT || 8080));
@@ -12,6 +16,15 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static('WebContent'));
 
+
+// Connect to database
+mongoose.connect(config.database.mlabs);
+
+
+/*Router Declarations*/
+
+var movies = require(__dirname + '/routes/movies')(); 
+var theatre = require(__dirname + '/routes/theatre')(); 
 // Index route
 app.get('/', function(req, res) {
     res.send('Hello world, I am a chat bot')
@@ -27,6 +40,13 @@ app.get('/webhook/', function(req, res) {
     }
     res.send('Error, wrong token')
 });
+
+/* Mapping the requests to routes (controllers) */
+
+
+app.use('/movies', movies);
+app.use('/theatre', theatre);
+
 
 app.post('/webhook/', function(req, res) {
     var data = req.body;
@@ -65,9 +85,10 @@ app.post('/webhook/', function(req, res) {
         // successfully received the callback. Otherwise, the request will time out.
         res.sendStatus(200);
     }
-})
+});
 
 // Spin up the server
 app.listen(app.get('port'), function() {
     console.log('running on port', app.get('port'))
-})
+});
+
