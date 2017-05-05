@@ -28,10 +28,10 @@
             xfbml: true,
             version: 'v2.9'
         });
-        FB.getLoginStatus(function(response) {
-            if (response.status === 'connected') {
-                console.log(response.authResponse.accessToken);
-            }
+        FB.login(function(response) {
+            console.log(response);
+        }, {
+            scope: 'email,user_likes'
         });
         FB.AppEvents.logPageView();
     };
