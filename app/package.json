@@ -10,9 +10,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "async": "*",
     "body-parser": "^1.15.2",
     "express": "^4.14.0",
     "mongodb": "^2.2.8",
+    "mongoose": "^4.9.7",
+    "mongoose-auto-increment": "*",
     "q": "^1.4.1",
     "request": "^2.74.0"
   }
