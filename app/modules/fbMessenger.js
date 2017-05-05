@@ -79,12 +79,15 @@ module.exports = {
             return;
         }
 
-        if (messageText) {
+        if (messageText.toUpperCase()) {
 
             // If we receive a text message, check to see if it matches any special
             // keywords and send back the corresponding example. Otherwise, just echo
             // the text we received.
             switch (messageText) {
+                case constants.COMMANDS.HELP_COMMAND:
+                    sendHelpMessage(senderID);
+                    break;
                 case 'image':
                     sendImageMessage(senderID);
                     break;
@@ -191,9 +194,19 @@ module.exports = {
         console.log("Received postback for user %d and page %d with payload '%s' " +
             "at %d", senderID, recipientID, payload, timeOfPostback);
 
-        // When a postback is called, we'll send a message back to the sender to 
-        // let them know it was successful
-        sendTextMessage(senderID, "Postback called");
+        if (payload == 'GET_STARTED_PAYLOAD') {
+            sendHelpMessage(senderID);
+        } else if (payload == constants.RECOMMEND_PAYLOAD) {
+            sendTextMessage(senderID, "Please wait while we fetch recommendation list for you.");
+        } else if (payload == constants.LOG_PAYLOAD) {
+            sendTextMessage(senderID, "Please brief your experience.");
+        } else if (payload == constants.PLAY_PAYLOAD) {
+            sendTextMessage(senderID, "Okay, Lets start a fun game.");
+        } else {
+            // When a postback is called, we'll send a message back to the sender to 
+            // let them know it was successful
+            sendTextMessage(senderID, "Postback called");
+        }
     },
 
     /*
@@ -233,6 +246,26 @@ module.exports = {
         console.log("Received account link event with for user %d with status %s " +
             "and auth code %s ", senderID, status, authCode);
     }
+}
+
+function sendHelpMessage(senderID) {
+    var quickReply = [{
+            "content_type": "text",
+            "title": "Recommend Movies",
+            "payload": constants.RECOMMEND_PAYLOAD
+        },
+        {
+            "content_type": "text",
+            "title": "Log Complaint",
+            "payload": constants.LOG_PAYLOAD
+        },
+        {
+            "content_type": "text",
+            "title": "Play",
+            "payload": constants.PLAY_PAYLOAD
+        }
+    ];
+    sendQuickReply(senderID, quickReply);
 }
 
 /*
@@ -520,29 +553,32 @@ function sendReceiptMessage(recipientId) {
  * Send a message with Quick Reply buttons.
  *
  */
-function sendQuickReply(recipientId) {
+function sendQuickReply(recipientId, quickReply) {
+    if (!quickReply) {
+        quickReply = [{
+                "content_type": "text",
+                "title": "Action",
+                "payload": "DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_ACTION"
+            },
+            {
+                "content_type": "text",
+                "title": "Comedy",
+                "payload": "DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_COMEDY"
+            },
+            {
+                "content_type": "text",
+                "title": "Drama",
+                "payload": "DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_DRAMA"
+            }
+        ];
+    }
     var messageData = {
         recipient: {
             id: recipientId
         },
         message: {
             text: "What's your favorite movie genre?",
-            quick_replies: [{
-                    "content_type": "text",
-                    "title": "Action",
-                    "payload": "DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_ACTION"
-                },
-                {
-                    "content_type": "text",
-                    "title": "Comedy",
-                    "payload": "DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_COMEDY"
-                },
-                {
-                    "content_type": "text",
-                    "title": "Drama",
-                    "payload": "DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_DRAMA"
-                }
-            ]
+            quick_replies: quickReply
         }
     };
 
@@ -635,7 +671,9 @@ function sendAccountLinking(recipientId) {
 function callSendAPI(messageData) {
     request({
         uri: constants.FB_MESSAGES_URL,
-        qs: { access_token: constants.PAGE_ACCESS_TOKEN },
+        qs: {
+            access_token: constants.PAGE_ACCESS_TOKEN
+        },
         method: 'POST',
         json: messageData
 

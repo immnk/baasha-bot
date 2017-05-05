@@ -31,7 +31,7 @@ var movies = require(__dirname + '/routes/movies')();
 var theatre = require(__dirname + '/routes/theatre')(); 
 // Index route
 app.get('/', function(req, res) {
-    res.send('Hello world, I am a chat bot')
+    res.sendFile(constants.HTML_DIR + 'index.html', { root: __dirname });
 });
 app.get('/createTicket', function(req,res){
 	createFDTicket(req,res);
@@ -46,15 +46,17 @@ app.get('/pushOnResolution', function(req,res){
 	res.send('ticket resolved')
 });
 
-app.get('/login', function(req, res) {
-    res.sendFile(constants.HTML_DIR + 'login.html', { root: __dirname });
+app.get('/privacy', function(req, res) {
+    res.sendFile(constants.HTML_DIR + 'privacy-policy.html', { root: __dirname });
 });
+
 
 app.get('/webhook/', function(req, res) {
     if (req.query['hub.verify_token'] === 'my_voice_is_my_password_verify_me') {
-        res.send(req.query['hub.challenge'])
+        res.send(req.query['hub.challenge']);
+        return;
     }
-    res.send('Error, wrong token')
+    res.send('Error, wrong token');
 });
 
 /* Mapping the requests to routes (controllers) */

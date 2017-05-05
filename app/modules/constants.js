@@ -6,4 +6,11 @@ module.exports = {
     "SERVER_URL": "https://thebotdesigners.herokuapp.com",
     "HTML_DIR": "WebContent/html/",
     "DB_URL": "mongodb://sirius:avengers@ds017256.mlab.com:17256/users",
+    "RECOMMEND_PAYLOAD": "RECOMMEND_MOVIES_PAYLOAD",
+    "PLAY_PAYLOAD": "PLAY_PAYLOAD",
+    "LOG_PAYLOAD": "LOG_COMPLAINT_PAYLOAD",
+    "COMMANDS": {
+        "HELP_COMMAND": "HELP",
+        "PLAY_COMMAND": "PLAY"
+    }
 };
