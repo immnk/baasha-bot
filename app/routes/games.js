@@ -1,57 +1,51 @@
 var express = require('express');
 var router = express.Router();
 
-module.exports = function(passport) {
+module.exports = function() {
 
 	router.get('/', function(req, res) {
-		res.send('Event Home');
+		res.send('Games Home');
 	});
 
-	router.get('/addOptions', function(req, res, next) {
-		var Event = require(__base + 'models/options');
+	router.get('/addQuestion', function(req, res, next) {
+		var Game = require(__base + 'models/games');
 
-		var option = Event({
+		var games = Game({
 			id: '100',
-  			name: 'Play',
-  			value: 'Play'
+  			ques: 'Who acted in Bahubali?',
+  			option: [
+  				{'optId':'A','optVal':'Shahrukh'},
+  				{'optId':'B','optVal':'Pawan Kalyan'},
+  				{'optId':'C','optVal':'Prabhas'},
+  				{'optId':'D','optVal':'Rajesh'}
+  			],
+  			answer: 'C'
 		});
 
-		event.save(function(err) {
+		games.save(function(err) {
 			if (err) next(err);
 
-			console.log('options created!');
-			res.send('options created!');
+			console.log('questions created!');
+			res.send('questions created!');
 		});
 
 	});
 
-	router.get('/getOptions', function(req, res) {
+	router.get('/getQuestion', function(req, res) {
 		console.log(req.user);
-		var Options = require(__base + 'models/options');
+		var Games = require(__base + 'models/games');
 
 		// get all the users
-		Options.find({}, function(err, options) {
+		Games.find({}, function(err, games) {
 			if (err) next(err);
 
 			// object of all the users
-			console.log(options);
-			res.json(options);
+			console.log(games);
+			res.json(games);
 		});
 
 	});
 
-	router.get('/delalloptions', function(req, res) {
-		var Options = require(__base + 'models/options');
-
-		// get all the users
-		Options.remove({}, function(err, data) {
-			if (err) next(err);
-
-			// console.log('all users removed!');
-			res.send('all options removed!');
-		});
-
-	});
 
 	return router;
 }

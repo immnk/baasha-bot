@@ -30,6 +30,8 @@ mongoose.connect(config.database.mlabs);
 var movies = require(__dirname + '/routes/movies')();
 var theatre = require(__dirname + '/routes/theatre')();
 var freshdesk = require(__dirname + '/routes/freshdesk')();
+var game = require(__dirname + '/routes/games')();
+
 // Index route
 app.get('/', function(req, res) {
     res.sendFile(constants.HTML_DIR + 'index.html', { root: __dirname });
