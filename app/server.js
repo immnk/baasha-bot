@@ -27,10 +27,10 @@ mongoose.connect(config.database.mlabs);
 
 /*Router Declarations*/
 
-var movies = require(__dirname + '/routes/movies')(); 
-var theatre = require(__dirname + '/routes/theatre')(); 
-var freshdesk = require(__dirname + '/routes/freshdesk')(); 
-var game = require(__dirname + '/routes/games')(); 
+var movies = require(__dirname + '/routes/movies')();
+var theatre = require(__dirname + '/routes/theatre')();
+var freshdesk = require(__dirname + '/routes/freshdesk')();
+var game = require(__dirname + '/routes/games')();
 
 // Index route
 app.get('/', function(req, res) {
@@ -102,11 +102,3 @@ app.post('/webhook/', function(req, res) {
 app.listen(app.get('port'), function() {
     console.log('running on port', app.get('port'))
 });
-
-
-
-//Cron job
-/**var cronJob = require('cron').CronJob;
-var myJob = new cronJob('00 30 11 * * 1-5', function(){console.log('lloHe')});
-myJob.start();*/
-
