@@ -6,8 +6,6 @@ var fbMessenger = require('./modules/fbMessenger');
 var mongoose = require('mongoose');
 var config = require('./config');
 var cronJob = require('cron').CronJob;
-var unirest = require('unirest');
-
 
 global.__base = __dirname + '/';
 
@@ -23,31 +21,52 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static('WebContent'));
 
-
 // Connect to database
 mongoose.connect(config.database.mlabs);
 
-
 /*Router Declarations*/
-
 var movies = require(__dirname + '/routes/movies')();
 var theatre = require(__dirname + '/routes/theatre')();
 var freshdesk = require(__dirname + '/routes/freshdesk')();
-var game = require(__dirname + '/routes/games')();
 var options = require(__dirname + '/routes/option')();
 var uber = require(__dirname + '/routes/uber')();
+
+/* Mapping the requests to routes (controllers) */
+app.use('/movies', movies);
+app.use('/theatre', theatre);
+app.use('/freshdesk', freshdesk);
+app.use('/option', options);
+app.use('/uber', uber);
 
 // Index route
 app.get('/', function(req, res) {
     res.sendFile(constants.HTML_DIR + 'index.html', { root: __dirname });
-   }
-);
-
+});
 
 app.get('/privacy', function(req, res) {
     res.sendFile(constants.HTML_DIR + 'privacy-policy.html', { root: __dirname });
 });
 
+app.get('/booking', function(req, res) {
+    res.sendFile(constants.HTML_DIR + 'booking.html', { root: __dirname });
+});
+
+app.get('/movie', function(req, res) {
+    var title = req.query.title;
+    res.sendFile(constants.HTML_DIR + 'movie.html?title=' + title, { root: __dirname });
+});
+
+app.get('/getCab', function(req, res) {
+    var senderID = req.query.sender;
+    fbMessenger.sendCabBookButton(senderID);
+    res.sendStatus(200);
+});
+
+app.get('/askReview', function(req, res) {
+    var senderID = req.query.sender;
+    fbMessenger.sendReviewButtons(senderID);
+    res.sendStatus(200);
+});
 
 app.get('/webhook/', function(req, res) {
     if (req.query['hub.verify_token'] === 'my_voice_is_my_password_verify_me') {
@@ -56,15 +75,6 @@ app.get('/webhook/', function(req, res) {
     }
     res.send('Error, wrong token');
 });
-
-/* Mapping the requests to routes (controllers) */
-
-
-app.use('/movies', movies);
-app.use('/theatre', theatre);
-app.use('/freshdesk', freshdesk);
-app.use('/option', options);
-app.use('/uber',uber);
 
 app.post('/webhook/', function(req, res) {
     var data = req.body;
@@ -103,57 +113,54 @@ app.post('/webhook/', function(req, res) {
         // successfully received the callback. Otherwise, the request will time out.
         res.sendStatus(200);
     }
-});
-
-
+})
 
 // Spin up the server
 app.listen(app.get('port'), function() {
     console.log('running on port', app.get('port'))
-});
+})
 
 
-var myJob = new cronJob('5 * * * * *', function(){
-     var Tickets = require(__base + 'models/tickets');
+var myJob = new cronJob('5 * * * * *', function() {
+    var Tickets = require(__base + 'models/tickets');
 
     // get all the users
     Tickets.find({}, function(err, tickets) {
         if (err) next(err);
 
         // object of all the tickets
-        for( var k = 0; k < tickets.length ; k++){
-            console.log("tickets",tickets[k].userId+":"+tickets[k].ticketId);
-            if(tickets[k].status != 4){
-                console.log("tickets",tickets[k].userId+":"+tickets[k].ticketId);
-                global.__senderId = tickets[k].userId; 
-                global.__ticketId = tickets[k].ticketId; 
+        for (var k = 0; k < tickets.length; k++) {
+            console.log("tickets", tickets[k].userId + ":" + tickets[k].ticketId);
+            if (tickets[k].status != 4) {
+                console.log("tickets", tickets[k].userId + ":" + tickets[k].ticketId);
+                global.__senderId = tickets[k].userId;
+                global.__ticketId = tickets[k].ticketId;
                 var params = {
                     "id": tickets[k].ticketId
                 };
-                request({ url: constants.LOCAL_URL+"/freshdesk/getTicketStatus", qs: params }, function(err, response, body) {
-                    if (err) { console.log("err"+err); return; }
+                request({ url: constants.LOCAL_URL + "/freshdesk/getTicketStatus", qs: params }, function(err, response, body) {
+                    if (err) { console.log("err" + err); return; }
                     console.log(body);
-                    if(body == 'Resolved' || body == 'Closed' ){
-                        Tickets.findOne({ticketId: global.__ticketId}, function(err, updateTkt) {
-                            if(!err) {
+                    if (body == 'Resolved' || body == 'Closed') {
+                        Tickets.findOne({ ticketId: global.__ticketId }, function(err, updateTkt) {
+                            if (!err) {
                                 updateTkt.status = 4;
                                 updateTkt.save(function(err) {
-                                    if(!err) {
+                                    if (!err) {
                                         console.log("err");
-                                    }
-                                    else {
+                                    } else {
                                         console.log("Success");
                                     }
                                 });
                             }
                         });
-                    sendTextMessage(global.__senderId, "Issue has been resolved! #" + global.__ticketId);
+                        sendTextMessage(global.__senderId, "Issue has been resolved! #" + global.__ticketId);
                     }
                 });
             }
         }
 
-});
+    });
 
 });
 
