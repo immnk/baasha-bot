@@ -5,7 +5,11 @@ var constants = require('./modules/constants');
 var fbMessenger = require('./modules/fbMessenger');
 var mongoose = require('mongoose');
 var config = require('./config');
+
 global.__base = __dirname + '/';
+
+var https = require("https");
+var unirest = require('unirest');
 
 var app = express();
 
@@ -25,23 +29,25 @@ mongoose.connect(config.database.mlabs);
 
 var movies = require(__dirname + '/routes/movies')(); 
 var theatre = require(__dirname + '/routes/theatre')(); 
+var freshdesk = require(__dirname + '/routes/freshdesk')(); 
 var game = require(__dirname + '/routes/games')(); 
-
 
 // Index route
 app.get('/', function(req, res) {
-    res.send('Hello world, I am a chat bot')
+    res.sendFile(constants.HTML_DIR + 'index.html', { root: __dirname });
 });
 
-app.get('/login', function(req, res) {
-    res.sendFile(constants.HTML_DIR + 'login.html', { root: __dirname });
+app.get('/privacy', function(req, res) {
+    res.sendFile(constants.HTML_DIR + 'privacy-policy.html', { root: __dirname });
 });
+
 
 app.get('/webhook/', function(req, res) {
     if (req.query['hub.verify_token'] === 'my_voice_is_my_password_verify_me') {
-        res.send(req.query['hub.challenge'])
+        res.send(req.query['hub.challenge']);
+        return;
     }
-    res.send('Error, wrong token')
+    res.send('Error, wrong token');
 });
 
 /* Mapping the requests to routes (controllers) */
@@ -49,7 +55,7 @@ app.get('/webhook/', function(req, res) {
 
 app.use('/movies', movies);
 app.use('/theatre', theatre);
-app.use('/games', game);
+
 
 app.post('/webhook/', function(req, res) {
     var data = req.body;
@@ -89,6 +95,8 @@ app.post('/webhook/', function(req, res) {
         res.sendStatus(200);
     }
 });
+
+
 
 // Spin up the server
 app.listen(app.get('port'), function() {
