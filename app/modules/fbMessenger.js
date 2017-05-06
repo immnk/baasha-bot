@@ -3,6 +3,41 @@ var request = require('request');
 var game = require('./game');
 
 module.exports = {
+
+    sendCabBookButton: function(senderID) {
+        var quickReply = [{
+                "content_type": "text",
+                "title": "Yes",
+                "payload": constants.BOOK_CAB_PAYLOAD
+            },
+            {
+                "content_type": "text",
+                "title": "No",
+                "payload": "IGNORE"
+            }
+        ];
+        var text = "Do you want to book a cab?";
+        sendQuickReply(senderID, quickReply, text);
+    },
+    sendReviewButtons: function(senderID) {
+        var buttons = [{
+            type: "postback",
+            title: "Good",
+            payload: constants.REVIEW.GOOD_PAYLOAD
+        }, {
+            type: "postback",
+            title: "Average",
+            payload: constants.REVIEW.AVERAGE_PAYLOAD
+        }, {
+            type: "postback",
+            title: "Poor",
+            payload: constants.REVIEW.POOR_PAYLOAD
+        }];
+        var title = "Please give your rating for the movie!";
+
+        sendButtonMessage(senderID, title, buttons);
+
+    },
     /*
      * Authorization Event
      *
@@ -15,7 +50,7 @@ module.exports = {
         var senderID = event.sender.id;
         var recipientID = event.recipient.id;
         var timeOfAuth = event.timestamp;
-        global.__senderId = senderID;
+
         // The 'ref' field is set in the 'Send to Messenger' plugin, in the 'data-ref'
         // The developer can set this to an arbitrary value to associate the 
         // authentication callback with the 'Send to Messenger' click event. This is
@@ -97,6 +132,13 @@ module.exports = {
                     default:
                         sendTextMessage(senderID, constants.KANNA_MESSAGES.CANT_UNDERSTAND);
                 }
+            } else if (quickReplyPayload.indexOf(constants.BOOK_CAB_PAYLOAD) != -1) {
+                //code to book a cab service
+                sendTypingOn(senderID);
+                setTimeout(() => {
+                    sendTypingOff(senderID);
+                    sendTextMessage(senderID, "Your cab has been booked.");
+                }, 3000);
             } else {
                 console.log("Quick reply for message %s with payload %s",
                     messageId, quickReplyPayload);
@@ -114,8 +156,8 @@ module.exports = {
             var params = {
                 userId: senderID,
                 emailId: 'sapnasat@gmail.com',
-                subject: 'test subject',
-                description: 'test description'
+                subject: 'Issue created from Baasha Bot',
+                description: messageText
             }
             request({ url: constants.SERVER_URL + "/freshdesk/createTicket", qs: params }, function(err, response, body) {
                 if (err) { console.log(err); return; }
@@ -134,54 +176,54 @@ module.exports = {
                 case constants.COMMANDS.PLAY_COMMAND:
                     sendPlayMessage(senderID);
                     break;
-                case 'image':
+                case 'IMAGE':
                     sendImageMessage(senderID);
                     break;
-                case 'gif':
+                case 'GIF':
                     sendGifMessage(senderID);
                     break;
 
-                case 'audio':
+                case 'AUDIO':
                     sendAudioMessage(senderID);
                     break;
 
-                case 'video':
+                case 'VIDEO':
                     sendVideoMessage(senderID);
                     break;
 
-                case 'file':
+                case 'FILE':
                     sendFileMessage(senderID);
                     break;
 
-                case 'button':
+                case 'BUTTON':
                     sendButtonMessage(senderID);
                     break;
 
-                case 'generic':
+                case 'GENERIC':
                     sendGenericMessage(senderID);
                     break;
 
-                case 'receipt':
+                case 'RECEIPT':
                     sendReceiptMessage(senderID);
                     break;
 
-                case 'quick reply':
+                case 'QUICK REPLY':
                     sendQuickReply(senderID);
                     break;
 
-                case 'read receipt':
+                case 'READ RECEIPT':
                     sendReadReceipt(senderID);
                     break;
 
-                case 'typing on':
+                case 'TYPING ON':
                     sendTypingOn(senderID);
                     break;
 
-                case 'typing off':
+                case 'TYPING OFF':
                     sendTypingOff(senderID);
                     break;
 
-                case 'account linking':
+                case 'ACCOUNT LINKING':
                     sendAccountLinking(senderID);
                     break;
 
@@ -241,9 +283,32 @@ module.exports = {
 
         if (payload == 'GET_STARTED_PAYLOAD') {
             sendHelpMessage(senderID);
+        } else if (payload.indexOf(constants.SELECT_SHOW_PAYLOAD) != -1) {
+            // sendTextMessage(senderID, payload);
+            console.log(payload);
+            var showID = payload.substring(payload.indexOf("#") + 1, payload.indexOf('$'));
+            var timing = payload.substring(payload.indexOf('$') + 1, payload.indexOf('@'));
+            var movieName = payload.substring(payload.indexOf('_') + 1);
+            // sendTextMessage(senderID, "Shall I go ahead and book the ticket for show @ " + showID + " at theatre " + theatreID + " for movie " + movieName);
+            sendBookingConfirmation(senderID, showID, timing, movieName);
+        } else if (payload.indexOf(constants.SELECT_THEATRE_PAYLOAD) != -1) {
+            var theatreID = payload.substring(payload.indexOf("$") + 1, payload.indexOf("#"));
+            var movieName = payload.substring(payload.indexOf('_') + 1);
+            console.log('Theatre ID' + theatreID + " Moviename: " + movieName);
+            sendTextMessage(senderID, "Requested for  ticket at " + theatreID + " for movie: " + movieName);
+            sendShowTimings(senderID, theatreID, movieName);
         } else if (payload.indexOf(constants.SELECT_MOVIE_PAYLOAD) != -1) {
             // Selected a movie. Now just fetch out locations.
-            sendLocations(senderID, payload.replace(constants.SELECT_MOVIE_PAYLOAD));
+            sendLocations(senderID, payload.replace(constants.SELECT_MOVIE_PAYLOAD, ""));
+        } else if (payload.indexOf(constants.TOUR_PAYLOAD) != -1) {
+            sendHelpMessage(senderID)
+        } else if (payload.indexOf("REVIEW_") != -1) {
+            // Say thanks for the review
+            sendTypingOn(senderID);
+            setTimeout(() => {
+                sendTypingOff(senderID);
+                sendTextMessage(senderID, "Thanks for giving your feedback.");
+            }, 3000);
         } else {
             // When a postback is called, we'll send a message back to the sender to 
             // let them know it was successful
@@ -294,18 +359,18 @@ function sendHelpMessage(senderID) {
     console.log('sendHelpMessage method called');
     var quickReply = [{
             "content_type": "text",
-            "title": "Recommend Movies",
+            "title": "Movies",
             "payload": constants.RECOMMEND_PAYLOAD
-        },
-        {
-            "content_type": "text",
-            "title": "Log Complaint",
-            "payload": constants.LOG_PAYLOAD
         },
         {
             "content_type": "text",
             "title": "Play",
             "payload": constants.PLAY_PAYLOAD
+        },
+        {
+            "content_type": "text",
+            "title": "Contact",
+            "payload": constants.LOG_PAYLOAD
         }
     ];
     var title = "I'm Baasha.. Maaanik Baasha!! Kanna how can I help you? ";
@@ -331,7 +396,7 @@ function sendMovies(senderID) {
             var element = {
                 title: movie.Title,
                 subtitle: movie.Plot,
-                item_url: constants.SERVER_URL,
+                item_url: constants.SERVER_URL + "/movie?title=" + movie.Title,
                 image_url: movie.Poster,
                 buttons: [{
                     type: "postback",
@@ -346,7 +411,108 @@ function sendMovies(senderID) {
 }
 
 function sendLocations(senderID, movieName) {
+    console.log('sendLocation method start');
+    console.log(movieName);
+    var url = constants.SERVER_URL + '/movies/getMoviesLocationsByTitle';
+    var params = { title: movieName }
+    request({ url: url, qs: params }, function(error, response, body) {
+        if (error) {
+            sendTextMessage(senderID, constants.KANNA_MESSAGES.ERROR);
+            return;
+        }
+        sendTextMessage(senderID, "Showing theatres by locations for movie: " + movieName);
+        var theatresByLocations = JSON.parse(response.body);
+        var movieTitle = theatresByLocations.title;
+        for (var location in theatresByLocations) {
+            if (theatresByLocations.hasOwnProperty(location)) {
+                // console.log(location + " -> " + theatresByLocations[location]);
+                if (location != 'title') {
+                    var theatres = theatresByLocations[location];
+                    var allButtons = [];
+                    theatres.forEach((theatre) => {
+                        var theatreButton = {
+                            type: "postback",
+                            title: theatre.name,
+                            payload: constants.SELECT_THEATRE_PAYLOAD + theatre._id + '#' + constants.SELECT_MOVIE_PAYLOAD + movieTitle
+                        }
+                        allButtons.push(theatreButton);
+                    });
+                    sendButtonMessage(senderID, location, allButtons);
+                }
+            }
+        }
+    });
+}
 
+function sendShowTimings(senderID, theatreID, movieName) {
+    console.log('Send show timing');
+    var url = constants.SERVER_URL + '/movies/getShowsByMovieTheatre';
+    var params = { title: movieName, theatre_id: theatreID }
+    request({ url: url, qs: params }, function(error, response, body) {
+        if (error) {
+            sendTextMessage(senderID, constants.KANNA_MESSAGES.ERROR);
+            return;
+        }
+        sendTextMessage(senderID, "Showing theatres by locations for movie: " + movieName);
+        var showTimings = JSON.parse(response.body);
+        console.log('show timings');
+        console.log(showTimings);
+        var allButtons = [];
+        showTimings.forEach((show) => {
+            var showButton = {
+                type: "postback",
+                title: show.timing,
+                payload: constants.SELECT_SHOW_PAYLOAD + show._id + "&" + constants.SELECT_THEATRE_PAYLOAD + show.timing + "@" + constants.SELECT_MOVIE_PAYLOAD + show.movie_name
+            }
+            allButtons.push(showButton);
+        });
+        if (allButtons.length > 0) {
+            console.log(allButtons);
+            sendButtonMessage(senderID, "Select show time", allButtons);
+        } else {
+            sendTextMessage(senderID, "Couldnt fetch all shows available");
+        }
+
+    });
+}
+
+function sendBookingConfirmation(senderID, showID, timing, movieName) {
+    console.log("Send booking confirmaion method");
+    var url = constants.SERVER_URL + '/movies/bookTicket';
+    var postData = {
+        json: {
+            user_id: senderID,
+            shows_id: showID,
+            seats: ['h1', 'h2'],
+            time: timing
+        }
+    }
+    request.post(url, postData, function(error, response, body) {
+        if (error || response.statusCode != 200) {
+            sendTextMessage(senderID, constants.KANNA_MESSAGES.ERROR);
+            return;
+        }
+
+        if (response.statusCode == 200) {
+            sendTextMessage(senderID, constants.KANNA_MESSAGES.SHOW_BOOKED);
+            var buttons = [{
+                type: "web_url",
+                url: constants.SERVER_URL + "/booking?senderID=" + senderID + "&showID=" + showID,
+                title: "Show ticket"
+            }, {
+                type: "postback",
+                title: "Tour",
+                payload: constants.TOUR_PAYLOAD
+            }, {
+                type: "phone_number",
+                title: "Call Support",
+                payload: "+16144957219"
+            }];
+            var title = "Kanna, these options might help you.";
+            sendButtonMessage(senderID, title, buttons);
+        } else
+            sendTextMessage(senderID, constants.KANNA_MESSAGES.ERROR);
+    });
 }
 
 /*
@@ -481,7 +647,23 @@ function sendTextMessage(recipientId, messageText) {
  * Send a button message using the Send API.
  *
  */
-function sendButtonMessage(recipientId) {
+function sendButtonMessage(recipientId, title, buttons) {
+    if (!buttons) {
+        buttons = [{
+            type: "web_url",
+            url: "https://www.oculus.com/en-us/rift/",
+            title: "Open Web URL"
+        }, {
+            type: "postback",
+            title: "Trigger Postback",
+            payload: "DEVELOPER_DEFINED_PAYLOAD"
+        }, {
+            type: "phone_number",
+            title: "Call Phone Number",
+            payload: "+16505551234"
+        }];
+        title = "This is test text";
+    }
     var messageData = {
         recipient: {
             id: recipientId
@@ -491,20 +673,8 @@ function sendButtonMessage(recipientId) {
                 type: "template",
                 payload: {
                     template_type: "button",
-                    text: "This is test text",
-                    buttons: [{
-                        type: "web_url",
-                        url: "https://www.oculus.com/en-us/rift/",
-                        title: "Open Web URL"
-                    }, {
-                        type: "postback",
-                        title: "Trigger Postback",
-                        payload: "DEVELOPER_DEFINED_PAYLOAD"
-                    }, {
-                        type: "phone_number",
-                        title: "Call Phone Number",
-                        payload: "+16505551234"
-                    }]
+                    text: title,
+                    buttons: buttons
                 }
             }
         }
