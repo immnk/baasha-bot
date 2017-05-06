@@ -41,6 +41,7 @@ app.get('/', function(req, res) {
    }
 );
 
+
 app.get('/privacy', function(req, res) {
     res.sendFile(constants.HTML_DIR + 'privacy-policy.html', { root: __dirname });
 });
