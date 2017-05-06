@@ -333,5 +333,49 @@ module.exports = function() {
             });
     });
 
+    router.get('/getMoviesReviews', function(req, res) {
+
+        var twitter = require('twitter');
+        var sentiment = require('sentiment');
+
+        var config = {
+            consumer_key: 'QhwLrrMAeUmudMcYZqfCK7nLX',
+            consumer_secret: 'WwME6kf1LYdlziTmH5XzqLvt7jCSH96yb5JjObB2DGq6zDgVYH',
+            access_token_key: '2722051105-U7C5WLfWGFaqZK7lHnWUg1KgGfPJvJzAKE1uH9r',
+            access_token_secret: '2DY0ZDp4bfns5HWKbylF6snesfvUOyQ7dxYAPttzLF83f'
+        };
+
+        var search = req.query.name;
+        var options = { count: 100 };
+        var twitterClient = new twitter(config);
+
+        twitterClient.get('search/tweets', { q: search, count: 100 }, function(err, data, response) {
+            var pos = 0;
+            var neg = 0;
+            var neut = 0;
+            for (var i = 0; i < data.statuses.length; i++) {
+
+                console.log(data.statuses[i].text);
+                console.log(score);
+                var score = sentiment(data.statuses[i].text).score;
+                if (score == 0) {
+                    neut++;
+                } else if (score < 0) {
+                    neg++;
+                } else {
+                    pos++;
+                }
+
+            };
+            var op = {
+                "pos": pos,
+                "neg": neg,
+                "neut": neut
+            };
+            res.json(op);
+        });
+
+    });
+
     return router;
 }
