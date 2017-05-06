@@ -1,5 +1,6 @@
 var constants = require('./constants');
 var request = require('request');
+var game = require('./game');
 
 module.exports = {
     /*
@@ -72,14 +73,56 @@ module.exports = {
             return;
         } else if (quickReply) {
             var quickReplyPayload = quickReply.payload;
-            console.log("Quick reply for message %s with payload %s",
-                messageId, quickReplyPayload);
+            if (quickReplyPayload.indexOf("GAME_RIGHT") != -1) {
+                sendTextMessage(senderID, constants.KANNA_MESSAGES.RIGHT_ANSWER);
+                setTimeout(function() {
+                    sendPlayMessage(senderID);
+                }, 500);
+            } else if (quickReplyPayload.indexOf("GAME_WRONG") != -1) {
+                sendTextMessage(senderID, constants.KANNA_MESSAGES.WRONG_ANSWER);
+                setTimeout(function() {
+                    sendPlayMessage(senderID);
+                }, 500);
+            } else if (quickReplyPayload.indexOf("MAIN_SERVICE_") != -1) {
+                switch (quickReplyPayload) {
+                    case constants.RECOMMEND_PAYLOAD:
+                        sendTextMessage(senderID, "Fetching you the list of recommendations.");
+                        break;
+                    case constants.LOG_PAYLOAD:
+                        sendTextMessage(senderID, "Please brief your concern for us to address it promptly.");
+                        break;
+                    case constants.PLAY_PAYLOAD:
+                        sendPlayMessage(senderID);
+                        break;
+                    default:
+                        sendTextMessage(senderID, constants.KANNA_MESSAGES.CANT_UNDERSTAND);
+                }
+            } else {
+                console.log("Quick reply for message %s with payload %s",
+                    messageId, quickReplyPayload);
 
-            sendTextMessage(senderID, "Quick reply tapped");
+                sendTextMessage(senderID, "Quick reply tapped");
+            }
             return;
         }
 
-        if (messageText.toUpperCase()) {
+        messageText = messageText.toUpperCase();
+        if (messageText.indexOf(constants.COMMANDS.MOVIES_NEAR_ME) != -1) {
+            sendMovies(senderID);
+        } else if (messageText.indexOf(constants.COMMANDS.ISSUE_COMMAND) != -1) {
+            // Create FD ticket
+            var params = {
+                userId: senderID,
+                emailId: 'sapnasat@gmail.com',
+                subject: 'test subject',
+                description: 'test description'
+            }
+            request({ url: constants.SERVER_URL + "/freshdesk/createTicket", qs: params }, function(err, response, body) {
+                if (err) { console.log(err); return; }
+                // console.log("Get response: " + response.statusCode);
+                sendTextMessage(senderID, "Ticket created. " + response.statusCode);
+            });
+        } else if (messageText) {
 
             // If we receive a text message, check to see if it matches any special
             // keywords and send back the corresponding example. Otherwise, just echo
@@ -88,10 +131,12 @@ module.exports = {
                 case constants.COMMANDS.HELP_COMMAND:
                     sendHelpMessage(senderID);
                     break;
+                case constants.COMMANDS.PLAY_COMMAND:
+                    sendPlayMessage(senderID);
+                    break;
                 case 'image':
                     sendImageMessage(senderID);
                     break;
-
                 case 'gif':
                     sendGifMessage(senderID);
                     break;
@@ -196,12 +241,9 @@ module.exports = {
 
         if (payload == 'GET_STARTED_PAYLOAD') {
             sendHelpMessage(senderID);
-        } else if (payload == constants.RECOMMEND_PAYLOAD) {
-            sendTextMessage(senderID, "Please wait while we fetch recommendation list for you.");
-        } else if (payload == constants.LOG_PAYLOAD) {
-            sendTextMessage(senderID, "Please brief your experience.");
-        } else if (payload == constants.PLAY_PAYLOAD) {
-            sendTextMessage(senderID, "Okay, Lets start a fun game.");
+        } else if (payload.indexOf(constants.SELECT_MOVIE_PAYLOAD) != -1) {
+            // Selected a movie. Now just fetch out locations.
+            sendLocations(senderID, payload.replace(constants.SELECT_MOVIE_PAYLOAD));
         } else {
             // When a postback is called, we'll send a message back to the sender to 
             // let them know it was successful
@@ -249,6 +291,7 @@ module.exports = {
 }
 
 function sendHelpMessage(senderID) {
+    console.log('sendHelpMessage method called');
     var quickReply = [{
             "content_type": "text",
             "title": "Recommend Movies",
@@ -265,7 +308,45 @@ function sendHelpMessage(senderID) {
             "payload": constants.PLAY_PAYLOAD
         }
     ];
-    sendQuickReply(senderID, quickReply);
+    var title = "What service do you want?";
+    sendQuickReply(senderID, quickReply, title);
+}
+
+function sendPlayMessage(senderID) {
+    var ques = game.getRandomGame();
+    var quickReply = ques.options;
+    var title = ques.question;
+    sendQuickReply(senderID, quickReply, title);
+}
+
+function sendMovies(senderID) {
+    request(constants.SERVER_URL + '/movies/getAllMovies', function(error, response, body) {
+        if (error) {
+            sendTextMessage(senderID, constants.KANNA_MESSAGES.ERROR);
+            return;
+        }
+        var movies = JSON.parse(response.body);
+        var elements = [];
+        movies.forEach((movie) => {
+            var element = {
+                title: movie.Title,
+                subtitle: movie.Plot,
+                item_url: constants.SERVER_URL,
+                image_url: movie.Poster,
+                buttons: [{
+                    type: "postback",
+                    title: "Select " + movie.Title,
+                    payload: constants.SELECT_MOVIE_PAYLOAD + movie.Title,
+                }],
+            }
+            elements.push(element);
+        });
+        sendGenericMessage(senderID, elements);
+    });
+}
+
+function sendLocations(senderID, movieName) {
+
 }
 
 /*
@@ -436,7 +517,39 @@ function sendButtonMessage(recipientId) {
  * Send a Structured Message (Generic Message type) using the Send API.
  *
  */
-function sendGenericMessage(recipientId) {
+function sendGenericMessage(recipientId, elements) {
+    if (!elements) {
+        elements = [{
+            title: "rift",
+            subtitle: "Next-generation virtual reality",
+            item_url: "https://www.oculus.com/en-us/rift/",
+            image_url: constants.SERVER_URL + "/assets/rift.png",
+            buttons: [{
+                type: "web_url",
+                url: "https://www.oculus.com/en-us/rift/",
+                title: "Open Web URL"
+            }, {
+                type: "postback",
+                title: "Call Postback",
+                payload: "Payload for first bubble",
+            }],
+        }, {
+            title: "touch",
+            subtitle: "Your Hands, Now in VR",
+            item_url: "https://www.oculus.com/en-us/touch/",
+            image_url: constants.SERVER_URL + "/assets/touch.png",
+            buttons: [{
+                type: "web_url",
+                url: "https://www.oculus.com/en-us/touch/",
+                title: "Open Web URL"
+            }, {
+                type: "postback",
+                title: "Call Postback",
+                payload: "Payload for second bubble",
+            }]
+        }];
+    }
+
     var messageData = {
         recipient: {
             id: recipientId
@@ -446,35 +559,7 @@ function sendGenericMessage(recipientId) {
                 type: "template",
                 payload: {
                     template_type: "generic",
-                    elements: [{
-                        title: "rift",
-                        subtitle: "Next-generation virtual reality",
-                        item_url: "https://www.oculus.com/en-us/rift/",
-                        image_url: constants.SERVER_URL + "/assets/rift.png",
-                        buttons: [{
-                            type: "web_url",
-                            url: "https://www.oculus.com/en-us/rift/",
-                            title: "Open Web URL"
-                        }, {
-                            type: "postback",
-                            title: "Call Postback",
-                            payload: "Payload for first bubble",
-                        }],
-                    }, {
-                        title: "touch",
-                        subtitle: "Your Hands, Now in VR",
-                        item_url: "https://www.oculus.com/en-us/touch/",
-                        image_url: constants.SERVER_URL + "/assets/touch.png",
-                        buttons: [{
-                            type: "web_url",
-                            url: "https://www.oculus.com/en-us/touch/",
-                            title: "Open Web URL"
-                        }, {
-                            type: "postback",
-                            title: "Call Postback",
-                            payload: "Payload for second bubble",
-                        }]
-                    }]
+                    elements: elements
                 }
             }
         }
@@ -553,7 +638,7 @@ function sendReceiptMessage(recipientId) {
  * Send a message with Quick Reply buttons.
  *
  */
-function sendQuickReply(recipientId, quickReply) {
+function sendQuickReply(recipientId, quickReply, text) {
     if (!quickReply) {
         quickReply = [{
                 "content_type": "text",
@@ -571,13 +656,14 @@ function sendQuickReply(recipientId, quickReply) {
                 "payload": "DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_DRAMA"
             }
         ];
+        text = "What's your favorite movie genre?";
     }
     var messageData = {
         recipient: {
             id: recipientId
         },
         message: {
-            text: "What's your favorite movie genre?",
+            text: text,
             quick_replies: quickReply
         }
     };
