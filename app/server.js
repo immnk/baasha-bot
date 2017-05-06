@@ -8,6 +8,7 @@ var config = require('./config');
 var cronJob = require('cron').CronJob;
 var unirest = require('unirest');
 
+
 global.__base = __dirname + '/';
 
 var https = require("https");
@@ -34,6 +35,7 @@ var theatre = require(__dirname + '/routes/theatre')();
 var freshdesk = require(__dirname + '/routes/freshdesk')();
 var game = require(__dirname + '/routes/games')();
 var options = require(__dirname + '/routes/option')();
+var uber = require(__dirname + '/routes/uber')();
 
 // Index route
 app.get('/', function(req, res) {
@@ -61,6 +63,7 @@ app.use('/movies', movies);
 app.use('/theatre', theatre);
 app.use('/freshdesk', freshdesk);
 app.use('/option', options);
+app.use('/uber',uber);
 
 app.post('/webhook/', function(req, res) {
     var data = req.body;

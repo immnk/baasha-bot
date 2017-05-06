@@ -5,6 +5,8 @@ module.exports = {
         "FD_API_KEY": "USyBH4BxWXMHNlsuvxh3",
         "FD_ENDPOINT": "meesun"
     },
+    "UBER_TOKEN":"EBIKEUsQ2n2twoIhq9VTNBZtqmmkc_cfBsGT-IPx",
+    "UBER_AUTH_REDIRECT":"http://localhost:8080/uber/bookUber",
     "WIT_AI_ENDPOINT": "https://api.wit.ai/message?v=20160829&q=",
     "WIT_AI_SERVER_TOKEN": "Bearer BFYEQAC2CHDMSNJY6WI7G7OOA5BLPMD4",
     "SERVER_URL": "https://thebotdesigners.herokuapp.com",
