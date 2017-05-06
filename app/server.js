@@ -27,9 +27,9 @@ mongoose.connect(config.database.mlabs);
 
 /*Router Declarations*/
 
-var movies = require(__dirname + '/routes/movies')(); 
-var theatre = require(__dirname + '/routes/theatre')(); 
-var freshdesk = require(__dirname + '/routes/freshdesk')(); 
+var movies = require(__dirname + '/routes/movies')();
+var theatre = require(__dirname + '/routes/theatre')();
+var freshdesk = require(__dirname + '/routes/freshdesk')();
 // Index route
 app.get('/', function(req, res) {
     res.sendFile(constants.HTML_DIR + 'index.html', { root: __dirname });
@@ -53,7 +53,7 @@ app.get('/webhook/', function(req, res) {
 
 app.use('/movies', movies);
 app.use('/theatre', theatre);
-
+app.use('/freshdesk', freshdesk);
 
 app.post('/webhook/', function(req, res) {
     var data = req.body;
@@ -100,4 +100,3 @@ app.post('/webhook/', function(req, res) {
 app.listen(app.get('port'), function() {
     console.log('running on port', app.get('port'))
 });
-

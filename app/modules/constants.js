@@ -4,7 +4,7 @@ module.exports = {
     "FD": {
         "FD_API_KEY": "USyBH4BxWXMHNlsuvxh3",
         "FD_ENDPOINT": "meesun"
-    }
+    },
     "WIT_AI_ENDPOINT": "https://api.wit.ai/message?v=20160829&q=",
     "WIT_AI_SERVER_TOKEN": "Bearer BFYEQAC2CHDMSNJY6WI7G7OOA5BLPMD4",
     "SERVER_URL": "https://thebotdesigners.herokuapp.com",

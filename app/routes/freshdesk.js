@@ -1,5 +1,5 @@
 var express = require('express');
-var freshdesk = require('./modules/freshdesk');
+var freshdesk = require('../modules/freshdesk');
 var app = express.Router();
 
 module.exports = function() {
@@ -15,6 +15,6 @@ module.exports = function() {
     app.get('/pushOnResolution', function(req, res) {
         res.send('ticket resolved');
     });
-    
+
     return app;
 }

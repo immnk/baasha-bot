@@ -1,3 +1,6 @@
+var constants = require('./constants');
+var unirest = require('unirest');
+
 module.exports = {
     createFDTicket: function(req, res) {
         var PATH = "/api/v2/tickets";
