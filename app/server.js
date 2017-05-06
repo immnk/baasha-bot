@@ -25,6 +25,9 @@ mongoose.connect(config.database.mlabs);
 
 var movies = require(__dirname + '/routes/movies')(); 
 var theatre = require(__dirname + '/routes/theatre')(); 
+var game = require(__dirname + '/routes/games')(); 
+
+
 // Index route
 app.get('/', function(req, res) {
     res.send('Hello world, I am a chat bot')
@@ -46,7 +49,7 @@ app.get('/webhook/', function(req, res) {
 
 app.use('/movies', movies);
 app.use('/theatre', theatre);
-
+app.use('/games', game);
 
 app.post('/webhook/', function(req, res) {
     var data = req.body;
