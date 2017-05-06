@@ -1,4 +1,5 @@
 var express = require('express');
+var request = require('request');
 var router = express.Router();
 
 module.exports = function() {
@@ -52,6 +53,35 @@ module.exports = function() {
 		});
 
 	});
+
+
+	// Send cron msg
+	router.get('/getTickets', function(req, res) {
+        var Tickets = require(__base + 'models/tickets');
+
+        // get all the users
+        Tickets.find({}, function(err, tickets) {
+            if (err) next(err);
+
+            // object of all the tickets
+            for( var k = 0; k < tickets.length ; k++){
+            	console.log("tickets",tickets[k].userId+":"+tickets[k].ticketId);
+            	req.senderID = tickets[k].userId;
+            	var params = {
+	                id: tickets[k].ticketId
+            	}
+            	request({ url: "https://thebotdesigners.herokuapp.com" + "/freshdesk/getTicket", qs: params }, function(err, response, body) {
+                if (err) { console.log(err); return; }
+                // console.log("Get response: " + response.statusCode);
+                	sendTextMessage(req.senderID, "Ticket created. " + response.statusCode);
+            	});
+            }
+
+            console.log(tickets);
+            res.json(tickets);
+        });
+
+    });
 
 	return router;
 }

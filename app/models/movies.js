@@ -11,7 +11,8 @@ var movieSchema = new Schema({
   trailerLink: String,
   Poster: String,
   popularImgLink: String,
-  Theatre_Arr:Array
+  Theatre_Arr:Array,
+  Title:String
 });
 
 var Movie = mongoose.model('Movie', movieSchema);

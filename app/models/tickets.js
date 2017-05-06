@@ -6,7 +6,8 @@ var ticketSchema = new Schema({
   ticketId: String,
   description: String,
   email: String,
-  subject: String
+  subject: String,
+  status: String
 });
 
 var Ticket = mongoose.model('Ticket', ticketSchema);

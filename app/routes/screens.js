@@ -4,7 +4,7 @@ var router = express.Router();
 module.exports = function() {
 
 	router.get('/', function(req, res) {
-		res.send('Event Home');
+		res.send('Screen Home');
 	});
 
 	router.get('/addOptions', function(req, res, next) {

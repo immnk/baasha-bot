@@ -9,6 +9,7 @@ module.exports = function() {
     });
 
     app.get('/getTicketStatus', function(req, res) {
+        console.log("router hit");
         freshdesk.getFDTicketStatus(req, res);
     });
 

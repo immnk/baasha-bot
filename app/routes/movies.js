@@ -36,13 +36,13 @@ module.exports = function() {
 		  	imgLink: 'https://img.spicinemas.in/resources/images/movies/a-dogs-purpose/150x207.jpg'
 		});**/
 
-var Theatreshowmovie = require(__base + 'models/theatreshowmovie');
+	var Theatreshowmovie = require(__base + 'models/theatreshowmovie');
 		var theatreshowmovie = Theatreshowmovie({
 			 theatre_id: "590cd9c873ce64ad8a685cbe",
-    movie_name: "Kavan",
-    timing: "3 pm to 7 pm"
+   			 movie_name: "Kavan",
+    		timing: "3 pm to 7 pm"
 		  	
-		});
+	});
 		
 
 
@@ -55,6 +55,7 @@ var Theatreshowmovie = require(__base + 'models/theatreshowmovie');
 		});
 
 	});
+
 
 	// TODO : Add wiki links at the end
 	router.get('/getAllMovies', function(req, res) {
@@ -71,6 +72,28 @@ var Theatreshowmovie = require(__base + 'models/theatreshowmovie');
 
 	});
 
+	// TODO : Add wiki links at the end
+	router.get('/getAllMoviesArray', function(req, res) {
+		console.log(req.user);
+		var Movies = require(__base + 'models/movies');
+
+		// get all the movies
+		Movies.find({}, function(err, movies) {
+			if (err) next(err);
+
+			console.log(movies);
+			var moviesArray = [];
+			for(var a = 0 ; a < movies.length ; a++){
+				console.log(movies[a].Title);
+				var obj = { "name" : movies[a].Title };
+				moviesArray.push(obj);
+			}
+			res.json({"current" : moviesArray});
+		});
+
+	});
+
+
 	router.get('/getMoviesByLocation', function(req, res) {
 		var Movies = require(__base + 'models/movies');
 
@@ -78,6 +101,21 @@ var Theatreshowmovie = require(__base + 'models/theatreshowmovie');
 		// get all the movies
 		var locationObj = {location : req.query.location};
 		Movies.find(locationObj, function(err, movies) {
+			if (err) next(err);
+
+			console.log(movies);
+			res.json(movies);
+		});
+
+	});
+
+	router.get('/getMovieByTitle', function(req, res) {
+		var Movies = require(__base + 'models/movies');
+
+		console.log("req.Title"+req.query.title);
+		// get all the movies
+		var titleObj = {Title : req.query.title};
+		Movies.find(titleObj, function(err, movies) {
 			if (err) next(err);
 
 			console.log(movies);
@@ -96,8 +134,7 @@ var Theatreshowmovie = require(__base + 'models/theatreshowmovie');
 		var bookingReq = Booking({user_id: req.body.user_id,
   							shows_id: req.body.shows_id,
   							seats : req.body.seats,
-  							time: req.body.time,
-  							movieUrl: req.body.url});
+  							time: req.body.time});
 
 		var Shows = require(__base + 'models/shows');
 		Shows.find({"_id":req.body.shows_id}, function(err, shows) {
