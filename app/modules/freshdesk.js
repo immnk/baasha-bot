@@ -1,5 +1,7 @@
 var constants = require('./constants');
 var unirest = require('unirest');
+var express = require('express');
+var router = express.Router();
 
 module.exports = {
     createFDTicket: function(req, res) {
@@ -35,7 +37,8 @@ module.exports = {
                         ticketId: response.body.id,
                         description: req.query.description,
                         email: req.query.emailId,
-                        subject: req.query.subject
+                        subject: req.query.subject,
+                        status: 2
                     });
                     ticketSchema.save(function(err) {
                         if (err) next(err);
@@ -50,11 +53,14 @@ module.exports = {
             });
     },
 
+
+
     getFDTicketStatus: function(req, res) {
+        console.log("getFDTicketStatus");
         var PATH = "/api/v2/tickets/" + req.query.id;
         var URL = "https://" + constants.FD.FD_ENDPOINT + ".freshdesk.com" + PATH;
         var Request = unirest.get(URL);
-
+        //console.log("getFDTicketStatus" + req);
         Request.auth({
                 user: constants.FD.FD_API_KEY,
                 pass: "Ms-4113009",
@@ -62,10 +68,10 @@ module.exports = {
             })
             .type('json')
             .end(function(response) {
-                console.log(response.body)
-                var status = response.body.status;
+                //console.log(response.body)
+                var statusVal = response.body.status;
                 var statusTxt;
-                switch (status) {
+                switch (statusVal) {
                     case 2:
                         statusTxt = 'Open';
                         break;
@@ -79,9 +85,13 @@ module.exports = {
                         statusTxt = "Closed";
                         break;
                 }
-                res.send(statusTxt);
-                console.log("Ticket Status Response Status : " + response.body.status)
+                response.statusTxt = statusTxt;
+                console.log("Ticket Status Response Status : " + response.statusTxt);
+                res.send(response.statusTxt);
+                
 
             });
     }
+
+   
 }

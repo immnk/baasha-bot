@@ -86,6 +86,21 @@ var Theatreshowmovie = require(__base + 'models/theatreshowmovie');
 
 	});
 
+	router.get('/getMovieByTitle', function(req, res) {
+		var Movies = require(__base + 'models/movies');
+
+		console.log("req.Title"+req.query.title);
+		// get all the movies
+		var titleObj = {Title : req.query.title};
+		Movies.find(titleObj, function(err, movies) {
+			if (err) next(err);
+
+			console.log(movies);
+			res.json(movies);
+		});
+
+	});
+
 
 	// Booking ticket flow - 3 rd
 	router.post('/bookTicket', function(req, res) {
@@ -96,8 +111,7 @@ var Theatreshowmovie = require(__base + 'models/theatreshowmovie');
 		var bookingReq = Booking({user_id: req.body.user_id,
   							shows_id: req.body.shows_id,
   							seats : req.body.seats,
-  							time: req.body.time,
-  							movieUrl: req.body.url});
+  							time: req.body.time});
 
 		var Shows = require(__base + 'models/shows');
 		Shows.find({"_id":req.body.shows_id}, function(err, shows) {
