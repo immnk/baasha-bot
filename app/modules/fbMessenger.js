@@ -308,7 +308,7 @@ function sendHelpMessage(senderID) {
             "payload": constants.PLAY_PAYLOAD
         }
     ];
-    var title = "What service do you want?";
+    var title = "I'm Baasha.. Maaanik Baasha!! Kanna how can I help you? ";
     sendQuickReply(senderID, quickReply, title);
 }
 
