@@ -55,7 +55,7 @@ app.get('/webhook/', function(req, res) {
 
 app.use('/movies', movies);
 app.use('/theatre', theatre);
-
+app.use('/freshdesk', freshdesk);
 
 app.post('/webhook/', function(req, res) {
     var data = req.body;
@@ -102,4 +102,11 @@ app.post('/webhook/', function(req, res) {
 app.listen(app.get('port'), function() {
     console.log('running on port', app.get('port'))
 });
+
+
+
+//Cron job
+/**var cronJob = require('cron').CronJob;
+var myJob = new cronJob('00 30 11 * * 1-5', function(){console.log('lloHe')});
+myJob.start();*/
 
