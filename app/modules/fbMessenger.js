@@ -5,19 +5,25 @@ var game = require('./game');
 module.exports = {
 
     sendCabBookButton: function(senderID) {
-        var quickReply = [{
-                "content_type": "text",
-                "title": "Yes",
-                "payload": constants.BOOK_CAB_PAYLOAD
-            },
-            {
-                "content_type": "text",
-                "title": "No",
-                "payload": "IGNORE"
-            }
-        ];
+        // var quickReply = [{
+        //     "content_type": "text",
+        //     "title": "Yes",
+        //     "payload": constants.BOOK_CAB_PAYLOAD
+        // }, {
+        //     "content_type": "text",
+        //     "title": "No",
+        //     "payload": "IGNORE"
+        // }];
+
+        var buttons = [{
+            "type": "web_url",
+            "url": constants.UBER,
+            "title": "Book Cab",
+            "webview_height_ratio": "compact"
+        }];
         var text = "Do you want to book a cab?";
-        sendQuickReply(senderID, quickReply, text);
+        // sendButtonMessage(senderID, quickReply, text);
+        sendButtonMessage(senderID, text, buttons);
     },
     sendReviewButtons: function(senderID) {
         var buttons = [{
@@ -122,6 +128,7 @@ module.exports = {
                 switch (quickReplyPayload) {
                     case constants.RECOMMEND_PAYLOAD:
                         sendTextMessage(senderID, "Fetching you the list of recommendations.");
+                        sendMovies(senderID);
                         break;
                     case constants.LOG_PAYLOAD:
                         sendTextMessage(senderID, "Please brief your concern for us to address it promptly.");
@@ -134,11 +141,19 @@ module.exports = {
                 }
             } else if (quickReplyPayload.indexOf(constants.BOOK_CAB_PAYLOAD) != -1) {
                 //code to book a cab service
-                sendTypingOn(senderID);
-                setTimeout(() => {
-                    sendTypingOff(senderID);
+                // sendTypingOn(senderID);
+                // setTimeout(() => {
+                //     sendTypingOff(senderID);
+                //     sendTextMessage(senderID, "Your cab has been booked.");
+                // }, 3000);
+
+                request({ url: constants.SERVER_URL + '/uber/bookUber' }, function(err, response, body) {
+                    if (err) {
+                        console.error(err);
+                        return
+                    }
                     sendTextMessage(senderID, "Your cab has been booked.");
-                }, 3000);
+                });
             } else {
                 console.log("Quick reply for message %s with payload %s",
                     messageId, quickReplyPayload);
@@ -148,10 +163,25 @@ module.exports = {
             return;
         }
 
-        messageText = messageText.toUpperCase();
+        if (typeof(messageText) == "string") {
+            messageText = messageText.toUpperCase();
+        } else {
+            sendTextMessage(senderID, constants.KANNA_MESSAGES.UNKNOWN);
+            return;
+        }
+
         if (messageText.indexOf(constants.COMMANDS.MOVIES_NEAR_ME) != -1) {
-            sendMovies(senderID);
-        } else if (messageText.indexOf(constants.COMMANDS.ISSUE_COMMAND) != -1) {
+            sendTypingOn(senderID);
+            setTimeout(() => {
+                sendTypingOff(senderID);
+                sendMovies(senderID);
+            }, 1000);
+        } else if (messageText.toLowerCase().indexOf(constants.COMMANDS.ISSUE_COMMAND) != -1 ||
+            messageText.toLowerCase().indexOf(constants.COMMANDS.HUNGRY_COMMAND) != -1 ||
+            messageText.toLowerCase().indexOf(constants.COMMANDS.POPCORN_COMMAND) != -1 ||
+            messageText.toLowerCase().indexOf(constants.COMMANDS.PROBLEM_COMMAND) != -1 ||
+            messageText.toLowerCase().indexOf(constants.COMMANDS.MAHADAD_COMMAND) != -1) {
+
             // Create FD ticket
             var params = {
                 userId: senderID,
@@ -160,9 +190,13 @@ module.exports = {
                 description: messageText
             }
             request({ url: constants.SERVER_URL + "/freshdesk/createTicket", qs: params }, function(err, response, body) {
-                if (err) { console.log(err); return; }
+                if (err) {
+                    console.log(err);
+                    return;
+                }
                 // console.log("Get response: " + response.statusCode);
-                sendTextMessage(senderID, "Ticket created. " + response.statusCode);
+                var message = body ? body : "Ticket created for your request.";
+                sendTextMessage(senderID, message);
             });
         } else if (messageText) {
 
@@ -228,7 +262,7 @@ module.exports = {
                     break;
 
                 default:
-                    sendTextMessage(senderID, messageText);
+                    sendTextMessage(senderID, constants.KANNA_MESSAGES.UNKNOWN);
             }
         } else if (messageAttachments) {
             sendTextMessage(senderID, "Message with attachment received");
@@ -295,7 +329,7 @@ module.exports = {
             var theatreID = payload.substring(payload.indexOf("$") + 1, payload.indexOf("#"));
             var movieName = payload.substring(payload.indexOf('_') + 1);
             console.log('Theatre ID' + theatreID + " Moviename: " + movieName);
-            sendTextMessage(senderID, "Requested for  ticket at " + theatreID + " for movie: " + movieName);
+            // sendTextMessage(senderID, "Requested for  ticket at " + theatreID + " for movie: " + movieName);
             sendShowTimings(senderID, theatreID, movieName);
         } else if (payload.indexOf(constants.SELECT_MOVIE_PAYLOAD) != -1) {
             // Selected a movie. Now just fetch out locations.
@@ -358,21 +392,18 @@ module.exports = {
 function sendHelpMessage(senderID) {
     console.log('sendHelpMessage method called');
     var quickReply = [{
-            "content_type": "text",
-            "title": "Movies",
-            "payload": constants.RECOMMEND_PAYLOAD
-        },
-        {
-            "content_type": "text",
-            "title": "Play",
-            "payload": constants.PLAY_PAYLOAD
-        },
-        {
-            "content_type": "text",
-            "title": "Contact",
-            "payload": constants.LOG_PAYLOAD
-        }
-    ];
+        "content_type": "text",
+        "title": "Movies",
+        "payload": constants.RECOMMEND_PAYLOAD
+    }, {
+        "content_type": "text",
+        "title": "Play",
+        "payload": constants.PLAY_PAYLOAD
+    }, {
+        "content_type": "text",
+        "title": "Contact",
+        "payload": constants.LOG_PAYLOAD
+    }];
     var title = "I'm Baasha.. Maaanik Baasha!! Kanna how can I help you? ";
     sendQuickReply(senderID, quickReply, title);
 }
@@ -470,7 +501,7 @@ function sendShowTimings(senderID, theatreID, movieName) {
             console.log(allButtons);
             sendButtonMessage(senderID, "Select show time", allButtons);
         } else {
-            sendTextMessage(senderID, "Couldnt fetch all shows available");
+            sendTextMessage(senderID, "No shows are available any time. Please try different theatre.");
         }
 
     });
@@ -811,21 +842,18 @@ function sendReceiptMessage(recipientId) {
 function sendQuickReply(recipientId, quickReply, text) {
     if (!quickReply) {
         quickReply = [{
-                "content_type": "text",
-                "title": "Action",
-                "payload": "DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_ACTION"
-            },
-            {
-                "content_type": "text",
-                "title": "Comedy",
-                "payload": "DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_COMEDY"
-            },
-            {
-                "content_type": "text",
-                "title": "Drama",
-                "payload": "DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_DRAMA"
-            }
-        ];
+            "content_type": "text",
+            "title": "Action",
+            "payload": "DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_ACTION"
+        }, {
+            "content_type": "text",
+            "title": "Comedy",
+            "payload": "DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_COMEDY"
+        }, {
+            "content_type": "text",
+            "title": "Drama",
+            "payload": "DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_DRAMA"
+        }];
         text = "What's your favorite movie genre?";
     }
     var messageData = {
