@@ -30,6 +30,7 @@ var theatre = require(__dirname + '/routes/theatre')();
 var freshdesk = require(__dirname + '/routes/freshdesk')();
 var options = require(__dirname + '/routes/option')();
 var uber = require(__dirname + '/routes/uber')();
+var userFav = require(__dirname + '/routes/userFav')();
 
 /* Mapping the requests to routes (controllers) */
 app.use('/movies', movies);
@@ -37,6 +38,7 @@ app.use('/theatre', theatre);
 app.use('/freshdesk', freshdesk);
 app.use('/option', options);
 app.use('/uber', uber);
+app.use('/userFav',userFav);
 
 // Index route
 app.get('/', function(req, res) {
