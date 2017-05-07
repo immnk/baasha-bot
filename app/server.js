@@ -156,7 +156,7 @@ var myJob = new cronJob('5 * * * * *', function() {
                                 });
                             }
                         });
-                        sendTextMessage(global.__senderId, "Issue has been resolved! #" + global.__ticketId);
+                        // sendTextMessage(global.__senderId, "Issue has been resolved! #" + global.__ticketId);
                     }
                 });
             }
