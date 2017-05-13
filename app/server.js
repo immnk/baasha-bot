@@ -91,6 +91,7 @@ app.post('/webhook/', function(req, res) {
 
             // Iterate over each messaging event
             pageEntry.messaging.forEach(function(messagingEvent) {
+                console.log("Messaging event" +messagingEvent);
                 if (messagingEvent.optin) {
                     fbMessenger.receivedAuthentication(messagingEvent);
                 } else if (messagingEvent.message) {

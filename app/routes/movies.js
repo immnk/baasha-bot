@@ -164,8 +164,8 @@ module.exports = function() {
     // 2nd flow said by Mani - 1st
     router.get('/getMoviesLocationsByTitle', function(req, res) {
         var Movies = require(__base + 'models/movies');
-        var Shows = require(__base + 'models/shows');
-        var Screens = require(__base + 'models/screens');
+        //var Shows = require(__base + 'models/shows');
+        //var Screens = require(__base + 'models/screens');
         var Theatre = require(__base + 'models/theatre');
         // get all the movies
 
