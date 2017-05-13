@@ -40,6 +40,19 @@ app.use('/option', options);
 app.use('/uber', uber);
 app.use('/userFav',userFav);
 
+app.all('*', function(req, res, next) {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'accept, content-type, x-parse-application-id, x-parse-rest-api-key, x-parse-session-token');
+     // intercept OPTIONS method
+    if ('OPTIONS' == req.method) {
+      res.send(200);
+    }
+    else {
+      next();
+    }
+});
+
 // Index route
 app.get('/', function(req, res) {
     res.sendFile(constants.HTML_DIR + 'index.html', { root: __dirname });
@@ -55,7 +68,7 @@ app.get('/booking', function(req, res) {
 
 app.get('/movie', function(req, res) {
     var title = req.query.title;
-    res.sendFile(constants.HTML_DIR + 'movie.html?title=' + title, { root: __dirname });
+    res.sendFile(constants.HTML_DIR + 'movie.html', { root: __dirname });
 });
 
 app.get('/getCab', function(req, res) {
@@ -91,7 +104,6 @@ app.post('/webhook/', function(req, res) {
 
             // Iterate over each messaging event
             pageEntry.messaging.forEach(function(messagingEvent) {
-                console.log("Messaging event" +messagingEvent);
                 if (messagingEvent.optin) {
                     fbMessenger.receivedAuthentication(messagingEvent);
                 } else if (messagingEvent.message) {
@@ -141,7 +153,7 @@ var myJob = new cronJob('5 * * * * *', function() {
                 var params = {
                     "id": tickets[k].ticketId
                 };
-                request({ url: constants.LOCAL_URL + "/freshdesk/getTicketStatus", qs: params }, function(err, response, body) {
+                request({ url: constants.SERVER_URL + "/freshdesk/getTicketStatus", qs: params }, function(err, response, body) {
                     if (err) { console.log("err" + err); return; }
                     console.log(body);
                     if (body == 'Resolved' || body == 'Closed') {
@@ -157,7 +169,7 @@ var myJob = new cronJob('5 * * * * *', function() {
                                 });
                             }
                         });
-                        // sendTextMessage(global.__senderId, "Issue has been resolved! #" + global.__ticketId);
+                        sendTextMessage(global.__senderId, "Ticket has been resolved! #" + global.__ticketId);
                     }
                 });
             }
@@ -166,7 +178,6 @@ var myJob = new cronJob('5 * * * * *', function() {
     });
 
 });
-
 myJob.start();
 
 

@@ -6,7 +6,7 @@ module.exports = {
         "FD_ENDPOINT": "meesun"
     },
     "UBER_TOKEN": "EBIKEUsQ2n2twoIhq9VTNBZtqmmkc_cfBsGT-IPx",
-    "UBER_AUTH_REDIRECT": "http://localhost:8080/uber/bookUber",
+    "UBER_AUTH_REDIRECT": "http://thebotdesigners.herokuapp.com/uber/bookUber",
     "UBER": "https://login.uber.com/oauth/v2/authorize?client_id=NOAdsESZIE2CPWaL4Fg0d71uNVjFzcLU&response_type=code&scope=request",
     "WIT_AI_ENDPOINT": "https://api.wit.ai/message?v=20160829&q=",
     "WIT_AI_SERVER_TOKEN": "Bearer BFYEQAC2CHDMSNJY6WI7G7OOA5BLPMD4",
@@ -26,14 +26,19 @@ module.exports = {
         "HELP_COMMAND": "HELP",
         "PLAY_COMMAND": "PLAY",
         "MOVIES_NEAR_ME": "MOVIES NEAR ME",
-        "ISSUE_COMMAND": "ISSUE"
+        "ISSUE_COMMAND": "issue",
+        "HUNGRY_COMMAND": "hungry",
+        "POPCORN_COMMAND": "popcorn",
+        "PROBLEM_COMMAND": "problem",
+        "MAHADAD_COMMAND": "mahdad"
     },
     "KANNA_MESSAGES": {
         "ERROR": "Kanna, an error ran into me because I don't",
         "CANT_UNDERSTAND": "Kanna, I cannot understand you.",
-        "WRONG_ANSWER": "Kanna, try again.",
+        "WRONG_ANSWER": "Kanna, you got it wrong da.",
         "RIGHT_ANSWER": "Right answer",
-        "SHOW_BOOKED": "Kanna, your show is booked."
+        "SHOW_BOOKED": "Kanna, your show is booked.",
+        "UNKNOWN": "Kanna, I am still learning."
     },
     "REVIEW": {
         "EXCELLENT_PAYLOAD": "REVIEW_EXCELLENT",
